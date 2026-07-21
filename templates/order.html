@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .planet.Title }} - AstrudAstronette</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles/style.css">
+    <style>
+        html, body {
+            overflow: hidden;
+            height: 100%;
+        }
+
+        body {
+            padding-top: 10;
+            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            flex-shrink: 0;
+        }
+
+        .order-page {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            min-height: 0;
+        }
+
+        .order-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .order-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            display: flex;
+            gap: 50px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+
+        .order-image-wrapper {
+            flex-shrink: 0;
+            width: 350px;
+            height: 350px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #F0F0F0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .order-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .order-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .order-meta {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .order-meta-item {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .order-meta-item span {
+            font-weight: 400;
+            color: #555555;
+        }
+
+        .order-divider {
+            width: 100%;
+            height: 2px;
+            background: #000000;
+            margin: 4px 0 8px 0;
+        }
+
+        .order-description {
+            font-size: 16px;
+            font-weight: 400;
+            color: #333333;
+            line-height: 1.7;
+            margin-bottom: 4px;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+
+        /* ===== ФУТЕР ===== */
+        .footer-team {
+            flex-shrink: 0;
+            position: relative;
+            padding: 20px 30px;
+            text-align: center;
+            color: #818181;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== ШАПКА ===== -->
+    <header class="header">
+        <a href="/" class="logo">
+            <img src="/static/img/planet.svg" alt="Логотип" class="logo-icon">
+            <span class="logo-text">AstrudAstronette</span>
+        </a>
+    </header>
+
+    <!-- ===== СТРАНИЦА ПЛАНЕТЫ ===== -->
+    <main class="order-page">
+        <div class="order-container">
+            <div class="order-card">
+                <!-- Изображение -->
+                <div class="order-image-wrapper">
+                    <img src="http://localhost:9000/planets/{{ .planet.Picture }}"
+                         alt="{{ .planet.Title }}"
+                         class="order-image">
+                </div>
+
+                <!-- Информация -->
+                <div class="order-info">
+                    <h1 class="order-title">{{ .planet.Title }}</h1>
+
+                    <div class="order-meta">
+                        <div class="order-meta-item">
+                            Масса: <span>{{ .planet.Mass }}</span>
+                        </div>
+                        <div class="order-meta-item">
+                            Радиус: <span>{{ .planet.Radius }}</span>
+                        </div>
+                    </div>
+
+                    <div class="order-divider"></div>
+
+                    <p class="order-description">{{ .planet.Description }}</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== ФУТЕР ===== -->
+    <footer class="footer-team">
+        <span>@AstrudAstronette Team</span>
+    </footer>
+
+</body>
+</html>

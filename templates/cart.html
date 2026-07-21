@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstrudAstronette</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body>
+
+    <!-- ===== ШАПКА ===== -->
+    <header class="header">
+        <a href="/" class="logo">
+            <img src="/static/img/planet.svg" alt="Логотип" class="logo-icon">
+            <span class="logo-text">AstrudAstronette</span>
+        </a>
+    </header>
+
+    <!-- ===== ТАБЛИЦА КОРЗИНЫ ===== -->
+    <div class="cart-table">
+        <!-- ЗАГОЛОВКИ -->
+        <div class="table-header">
+            <div class="header-item">Планета</div>
+            <div class="header-item">Масса, кг</div>
+            <div class="header-item">Радиус, км</div>
+            <div class="header-item">Высота орбиты, км</div>
+            <div class="header-item">Скорость спутника</div>
+            <div class="header-item">Заметка</div>
+        </div>
+
+        <!-- СПИСОК ПЛАНЕТ -->
+        {{ range .planets }}
+        <div class="cart-item">
+            <img src="http://localhost:9000/planets/{{ .Picture }}" alt="img"  style = "width: 200px; height: 200px; border-radius: 20px;" class = "planet-img">
+            <div class="planet-title">{{ .Title }}</div>
+            <div class="planet-mass">{{ .Mass }}</div>
+            <div class="planet-radius">{{ .Radius }}</div>
+            <div class="planet-orbit">500</div>
+            <div class="planet-speed">67</div>
+            <div class="planet-note">
+                <input type="text" placeholder="Заметка" class="note-input">
+            </div>
+        </div>
+        {{ end }}
+    </div>
+
+    <!-- ===== КНОПКИ ДЕЙСТВИЙ ===== -->
+    <div class="actions">
+        <button class="btn btn-primary">Сделать расчёт</button>
+        <button class="btn btn-secondary">Отмена</button>
+    </div>
+
+<footer>
+    <div class="footer-team">
+        <span>@AstrudAstronette Team</span>
+    </div>
+</footer>
+
+</body>
+</html>
