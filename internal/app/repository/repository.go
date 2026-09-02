@@ -2,145 +2,142 @@ package repository
 
 import (
 	"fmt"
-	"strings"
 )
 
-type Repository struct {
-}
+// Структура репозитория (пока пустая, данные хардкодим в методах)
+type Repository struct{}
 
 func NewRepository() (*Repository, error) {
 	return &Repository{}, nil
 }
 
-type Planet struct {
-	ID          int
-	Title       string
-	Mass        float64 // Масса в кг (например, 3.30e23)
-	Radius      int     // Радиус в км
-	Picture     string  // Ключ изображения в Minio
-	Description string  // Краткое описание
+// Модель услуги (Категория потребительской корзины)
+type Category struct {
+	ID           int
+	Title        string  // Название категории (например, "Продукты")
+	Status       string  // "published", "draft", "deleted"
+	ImageKey     string  // Ключ изображения в Minio (латиница)
+	VideoKey     string  // Ключ видео в Minio (латиница)
+	Description  string  // Текстовое описание (для кнопки "ещё")
+	BasketWeight float64 // Вес в корзине (%) - числовое поле для фильтрации
+	PreviousSum  int     // Сумма год назад (руб)
+	TodaySum     int     // Сумма сейчас (руб)
+	Likes        []int   // Массив ID пользователей, поставивших лайк
 }
 
-func (r *Repository) GetPlanets() ([]Planet, error) {
-	planets := []Planet{
-		{
-			ID:          1,
-			Title:       "Меркурий",
-			Mass:        3.30e23,
-			Radius:      2440,
-			Picture:     "mercury.jpg",
-			Description: "Ближайшая к Солнцу планета, самая маленькая в Солнечной системе. Температура колеблется от -180°C до +430°C. Атмосфера почти отсутствует, поверхность покрыта кратерами.",
-		},
-		{
-			ID:          2,
-			Title:       "Венера",
-			Mass:        4.87e24,
-			Radius:      6052,
-			Picture:     "venus.jpg",
-			Description: "Самая горячая планета (температура ~460°C) из-за парникового эффекта. Вращается в обратную сторону (ось наклонена на 177°). Плотная атмосфера из углекислого газа с облаками серной кислоты.",
-		},
-		{
-			ID:          3,
-			Title:       "Земля",
-			Mass:        5.97e24,
-			Radius:      6371,
-			Picture:     "earth.jpg",
-			Description: "Третья планета от Солнца, единственная известная планета с жизнью. Имеет жидкую воду на поверхности, азотно-кислородную атмосферу и магнитное поле, защищающее от солнечного ветра.",
-		},
-		{
-			ID:          4,
-			Title:       "Марс",
-			Mass:        6.42e23,
-			Radius:      3390,
-			Picture:     "mars.jpg",
-			Description: "Красная планета из-за оксида железа (ржавчины) на поверхности. Имеет самую высокую гору в Солнечной системе — Олимп (21.9 км). Атмосфера разрежена, состоит в основном из углекислого газа.",
-		},
-		{
-			ID:          5,
-			Title:       "Юпитер",
-			Mass:        1.90e27,
-			Radius:      69911,
-			Picture:     "jupyter.jpg",
-			Description: "Самая большая планета, масса превышает массу всех остальных планет вместе взятых. Состоит из водорода и гелия. Имеет Большое Красное Пятно — гигантский шторм, который длится сотни лет.",
-		},
-		{
-			ID:          6,
-			Title:       "Сатурн",
-			Mass:        5.68e26,
-			Radius:      58232,
-			Picture:     "saturn.jpg",
-			Description: "Знаменита своей системой колец, состоящих из льда и камней. Состоит в основном из водорода и гелия. Плотность планеты меньше плотности воды. Имеет 146 известных спутников.",
-		},
-		{
-			ID:          7,
-			Title:       "Уран",
-			Mass:        8.68e25,
-			Radius:      25362,
-			Picture:     "uranus.jpg",
-			Description: "Ледяной гигант с наклоном оси почти 98° (вращается 'на боку'). Состоит из воды, метана и аммиака. Имеет слабую систему колец и 27 спутников.",
-		},
-		{
-			ID:          8,
-			Title:       "Нептун",
-			Mass:        1.02e26,
-			Radius:      24622,
-			Picture:     "neptunejpg.jpg",
-			Description: "Самая далекая планета, самый сильный ветер в Солнечной системе (до 2100 км/ч). Имеет темно-синий цвет из-за метана в атмосфере. Была открыта математически (по возмущениям орбиты Урана).",
-		},
-	}
+func (r *Repository) GetCategories(filterWeight string) ([]Category, error) {
+	allCategories := r.getAllData()
+	var result []Category
 
-	if len(planets) == 0 {
-		return nil, fmt.Errorf("Массив пустой")
-	}
-
-	return planets, nil
-}
-
-func (r *Repository) GetPlanet(id int) (Planet, error) {
-	planets, err := r.GetPlanets()
-	if err != nil {
-		return Planet{}, err
-	}
-
-	for _, planet := range planets {
-		if planet.ID == id {
-			return planet, nil
+	for _, c := range allCategories {
+		if c.Status == "deleted" {
+			continue
 		}
-	}
-	return Planet{}, fmt.Errorf("Планета не найдена")
-}
 
-func (r *Repository) GetPlanetByTitle(title string) ([]Planet, error) {
-	planets, err := r.GetPlanets()
-	if err != nil {
-		return []Planet{}, err
-	}
-
-	var result []Planet
-	for _, planet := range planets {
-		if strings.Contains(strings.ToLower(planet.Title), strings.ToLower(title)) {
-			result = append(result, planet)
+		if filterWeight != "" {
+			var filterVal float64
+			_, err := fmt.Sscanf(filterWeight, "%f", &filterVal)
+			if err == nil {
+				if c.BasketWeight < filterVal {
+					continue
+				}
+			}
 		}
+		result = append(result, c)
 	}
 	return result, nil
 }
 
-func (r *Repository) GetCart() ([]Planet, error) {
-	planets, err := r.GetPlanets()
-	if err != nil {
-		return []Planet{}, err
-	}
+func (r *Repository) GetCategoryByID(id int, next bool) (Category, error) {
+	allCategories := r.getAllData()
 
-	var result []Planet
-	for _, planet := range planets {
-		if planet.ID == 3 || planet.ID == 4 {
-			result = append(result, planet)
+	// Собираем все, КРОМЕ удаленных (и published, и draft)
+	var visible []Category
+	for _, c := range allCategories {
+		if c.Status != "deleted" {
+			visible = append(visible, c)
 		}
 	}
 
-	if len(result) == 0 {
-		return nil, fmt.Errorf("Корзина пуста")
+	if len(visible) == 0 {
+		return Category{}, fmt.Errorf("нет доступных категорий")
 	}
 
-	return result, nil
+	// Логика поиска (та же, что была для published, но теперь для visible)
+	if !next {
+		if id == 0 {
+			return visible[0], nil
+		}
+		for _, c := range visible {
+			if c.ID == id {
+				return c, nil
+			}
+		}
+		return Category{}, fmt.Errorf("категория не найдена")
+	}
+
+	// Логика next
+	foundIndex := -1
+	for i, c := range visible {
+		if c.ID == id {
+			foundIndex = i
+			break
+		}
+	}
+	if foundIndex == -1 {
+		return visible[0], nil
+	}
+	nextIndex := (foundIndex + 1) % len(visible)
+	return visible[nextIndex], nil
+}
+
+func (r *Repository) GetDraft() (Category, error) {
+	allCategories := r.getAllData()
+	for _, c := range allCategories {
+		if c.Status == "draft" {
+			return c, nil
+		}
+	}
+	return Category{}, fmt.Errorf("черновик не найден")
+}
+
+func (r *Repository) getAllData() []Category {
+	return []Category{
+		{
+			ID:           1,
+			Title:        "Продукты",
+			Status:       "published",
+			ImageKey:     "goods.jpg",
+			VideoKey:     "goods.mp4",
+			Description:  "Самая тяжелая статья расходов. Включает мясо, молоко, овощи, фрукты и хлебобулочные изделия. Цены на эту категорию растут быстрее всего из-за сезонности и логистики.",
+			BasketWeight: 35.0,
+			PreviousSum:  48590,
+			TodaySum:     51240,
+			Likes:        []int{101, 102, 105, 108, 112},
+		},
+		{
+			ID:           2,
+			Title:        "Одежда и обувь",
+			Status:       "draft",
+			ImageKey:     "clothes.jpg",
+			VideoKey:     "clothes.mp4",
+			Description:  "Сезонные расходы на гардероб. Сюда входят верхняя одежда, обувь и повседневные вещи. Вес категории сильно зависит от времени года.",
+			BasketWeight: 12.5,
+			PreviousSum:  34990,
+			TodaySum:     37800,
+			Likes:        []int{101, 103},
+		},
+		{
+			ID:           3,
+			Title:        "Развлечения",
+			Status:       "deleted",
+			ImageKey:     "amuzement.jpg",
+			VideoKey:     "amuzement.mp4",
+			Description:  "Отдыхать тоже важно, поэтому не забываем о развлечениях: музеи, парки, театры, кафе и кино.",
+			BasketWeight: 18.2,
+			PreviousSum:  5900,
+			TodaySum:     4500,
+			Likes:        []int{101, 102, 103, 104, 105, 106, 107},
+		},
+	}
 }

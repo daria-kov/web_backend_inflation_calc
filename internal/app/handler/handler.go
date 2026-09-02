@@ -19,64 +19,85 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-func (h *Handler) GetPlanets(ctx *gin.Context) {
-	var planets []repository.Planet
-	var err error
+// 1. Страница "Плитка" (список всех категорий)
+// Роут: GET /grid?filter=...
+func (h *Handler) GetGrid(ctx *gin.Context) {
+	// Получаем параметр фильтра из URL (например, ?filter=20)
+	filterWeight := ctx.Query("filter")
 
-	searchQuery := ctx.Query("query")
-	if searchQuery == "" {
-		planets, err = h.Repository.GetPlanets()
-		if err != nil {
-			logrus.Error(err)
-		}
-	} else {
-		planets, err = h.Repository.GetPlanetByTitle(searchQuery)
-		if err != nil {
-			logrus.Error(err)
-		}
+	// Запрашиваем данные из репозитория с учетом фильтра
+	categories, err := h.Repository.GetCategories(filterWeight)
+	if err != nil {
+		logrus.Error(err)
 	}
 
-	cartDevices, err := h.Repository.GetCart()
-	CartCount := 0
-	if err == nil {
-		CartCount = len(cartDevices)
+	// Подготовка данных для шаблона: считаем количество лайков для каждой категории
+	// В Go шаблонах нельзя вызывать len() внутри цикла удобно, поэтому посчитаем заранее
+	type CategoryView struct {
+		repository.Category
+		LikesCount int // Новое поле для шаблона
 	}
 
-	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"planets":   planets,
-		"query":     searchQuery,
-		"CartCount": CartCount,
+	var viewCategories []CategoryView
+	for _, c := range categories {
+		viewCategories = append(viewCategories, CategoryView{
+			Category:   c,
+			LikesCount: len(c.Likes), // Вычисляем длину массива лайков
+		})
+	}
+
+	ctx.HTML(http.StatusOK, "grid.html", gin.H{
+		"categories":  viewCategories,
+		"filterValue": filterWeight, // Передаем значение обратно, чтобы поле input не пустело
 	})
 }
 
-func (h *Handler) GetPlanet(ctx *gin.Context) {
+// 2. Страница "Лента" (одна категория с видео)
+// Роут: GET /feed/:id?next=true
+func (h *Handler) GetFeed(ctx *gin.Context) {
+	// Получаем ID из URL. Если его нет (вкладка "Лента" без ID), будет пустая строка
 	idStr := ctx.Param("id")
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		logrus.Error(err)
+	id := 0
+	if idStr != "" {
+		var err error
+		id, err = strconv.Atoi(idStr)
+		if err != nil {
+			logrus.Error("Неверный ID:", err)
+			// Если ID кривой, считаем как 0 (покажем первую)
+			id = 0
+		}
 	}
 
-	planet, err := h.Repository.GetPlanet(id)
+	// Проверяем параметр ?next=true
+	nextParam := ctx.Query("next")
+	isNext := (nextParam == "true")
+
+	// Получаем категорию из репозитория
+	category, err := h.Repository.GetCategoryByID(id, isNext)
 	if err != nil {
 		logrus.Error(err)
+		// Если ошибка (например, нет данных), можно редиректить на главную или показать ошибку
+		// Но пока просто передадим пустую структуру, шаблон должен это пережить
 	}
 
-	ctx.HTML(http.StatusOK, "order.html", gin.H{
-		"planet": planet,
+	// Считаем лайки для текущей страницы
+	likesCount := len(category.Likes)
+
+	ctx.HTML(http.StatusOK, "feed.html", gin.H{
+		"category":   category,
+		"likesCount": likesCount,
 	})
 }
 
-func (h *Handler) GetCart(ctx *gin.Context) {
-	var planets []repository.Planet
-	var err error
-
-	planets, err = h.Repository.GetCart()
+// 3. Страница "Добавление" (черновик)
+// Роут: GET /add
+func (h *Handler) GetAdd(ctx *gin.Context) {
+	draft, err := h.Repository.GetDraft()
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	ctx.HTML(http.StatusOK, "cart.html", gin.H{
-		"planets": planets,
+	ctx.HTML(http.StatusOK, "add.html", gin.H{
+		"draft": draft,
 	})
 }

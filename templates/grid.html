@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>мойИПЦ</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <a class="logo">
+            <span class="logo-icon"><span class="logo-mid"><span class="logo-in"></span></span></span>
+            <span class="logo-text"><span class="letter-pink">мойИ</span><span class="letter-orange">П</span><span class="letter-yellow">Ц</span></span>
+        </a>
+    </header>
+
+    <main class="grid">
+        <!-- Форма поиска с кнопкой-лупой -->
+        <form class="grid-search" action="/grid" method="get">
+            <div class="search-wrapper">
+                <input type="text" name="filter" placeholder="Фильтр по весу (%)" value="{{ .filterValue }}">
+                <button type="submit" class="search-btn" aria-label="Поиск">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                </button>
+            </div>
+        </form>
+
+        <div class="cards">
+            <!-- Цикл по всем категориям из контроллера -->
+            {{ range .categories }}
+            <a class="card" href="/feed/{{ .ID }}">
+                <img src="http://localhost:9000/categories/{{ .ImageKey }}" alt="{{ .Title }}">
+
+                <div class="card-title">{{ .Title }}</div>
+                <div class="card-pills">
+                    <!-- Поле по теме (Вес) -->
+                    <span class="pill pill-pink">{{ .BasketWeight }}%</span>
+
+                    <!-- Количество лайков (вычислено в контроллере) -->
+                    <span class="pill pill-white">♥ {{ .LikesCount }}</span>
+
+                    <!-- Статус -->
+                    {{ if eq .Status "published" }}
+                        <span class="pill pill-pink">опубл.</span>
+                    {{ else if eq .Status "draft" }}
+                        <span class="pill pill-white">черн.</span>
+                    {{ end }}
+                </div>
+            </a>
+            {{ end }}
+        </div>
+    </main>
+
+    <nav class="tabbar">
+        <a class="tab" href="/feed/1">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="currentColor"/></svg>
+            <span>Лента</span>
+        </a>
+        <a class="tab" href="/add">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M11 6h2v5h5v2h-5v5h-2v-5H6v-2h5z" fill="#fff"/></svg>
+            <span>Добавить</span>
+        </a>
+        <!-- Активная вкладка -->
+        <a class="tab active" href="/grid">
+            <svg viewBox="0 0 24 24"><path d="M3 4h3l2.5 12h9L21 8H7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="20" r="1.7" fill="currentColor"/><circle cx="17" cy="20" r="1.7" fill="currentColor"/></svg>
+            <span>Категории</span>
+        </a>
+    </nav>
+
+</body>
+</html>

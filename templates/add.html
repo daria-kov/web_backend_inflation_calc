@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>мойИПЦ</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <a class="logo">
+            <span class="logo-icon"><span class="logo-mid"><span class="logo-in"></span></span></span>
+            <span class="logo-text"><span class="letter-pink">мойИ</span><span class="letter-orange">П</span><span class="letter-yellow">Ц</span></span>
+        </a>
+    </header>
+
+    <main class="add">
+        <form class="add-card">
+            <label class="add-label">Категория корзины
+                <input type="text" name="title" value="{{ .draft.Title }}">
+            </label>
+            <label class="add-label">Вес категории (в %)
+                <input type="text" name="weight" value="{{ .draft.BasketWeight }}">
+            </label>
+            <label class="add-label">Сумма (год назад)
+                <input type="text" name="sum_year_ago" value="{{ .draft.PreviousSum }}">
+            </label>
+            <label class="add-label">Сумма (сейчас)
+                <input type="text" name="sum_now" value="{{ .draft.TodaySum }}">
+            </label>
+
+            <button class="add-btn" type="button">Добавить категорию</button>
+        </form>
+    </main>
+
+    <nav class="tabbar">
+        <a class="tab" href="/feed/1">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="currentColor"/></svg>
+            <span>Лента</span>
+        </a>
+        <!-- Активная вкладка -->
+        <a class="tab active" href="/add">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M11 6h2v5h5v2h-5v5h-2v-5H6v-2h5z" fill="#fff"/></svg>
+            <span>Добавить</span>
+        </a>
+        <a class="tab" href="/grid">
+            <svg viewBox="0 0 24 24"><path d="M3 4h3l2.5 12h9L21 8H7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="20" r="1.7" fill="currentColor"/><circle cx="17" cy="20" r="1.7" fill="currentColor"/></svg>
+            <span>Категории</span>
+        </a>
+    </nav>
+
+</body>
+</html>
