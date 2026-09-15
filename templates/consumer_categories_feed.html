@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>мойИПЦ</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <a class="logo">
+            <span class="logo-icon"><span class="logo-mid"><span class="logo-in"></span></span></span>
+            <span class="logo-text"><span class="letter-pink">мойИ</span><span class="letter-orange">П</span><span class="letter-yellow">Ц</span></span>
+        </a>
+    </header>
+
+    <main class="feed">
+        <video class="feed-bg" autoplay muted loop playsinline>
+            <source src="http://localhost:9000/categories/{{ .category.VideoKey }}" type="video/mp4">
+        </video>
+
+        <div class="feed-overlay">
+
+            <div class="feed-left">
+                <div class="feed-title">{{ .category.Title }}</div>
+                <div class="feed-category">Категория корзины</div>
+
+                <!-- Чекбокс должен быть ДО элементов, которыми он управляет -->
+                <input type="checkbox" id="more-toggle" class="more-toggle">
+
+                <div class="feed-desc-wrapper">
+                    <div class="feed-desc">
+                        {{ .category.Description }}
+                    </div>
+                    <label for="more-toggle" class="more-toggle-label">
+                        <span class="more-open">ещё</span>
+                        <span class="more-close">скрыть</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="feed-right">
+                <button class="like-btn">
+                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    {{ .likesCount }}
+                </button>
+                <div class="feed-meta">
+                    Данные за
+                    <b>{{ .category.Date }}</b>
+                </div>
+                <div class="feed-meta">
+                    Вес
+                    <b>{{ .category.BasketWeight }} %</b>
+                </div>
+
+                <a href="/consumer_categories_feed/{{ .category.ID }}?next=true" class="expand-btn">
+                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <nav class="tabbar">
+        <a class="tab active" href="/consumer_categories_feed/1">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="currentColor"/></svg>
+            <span>Лента</span>
+        </a>
+        <a class="tab" href="/add_consumer_category">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M11 6h2v5h5v2h-5v5h-2v-5H6v-2h5z" fill="#fff"/></svg>
+            <span>Добавить</span>
+        </a>
+        <a class="tab" href="/consumer_categories">
+            <svg viewBox="0 0 24 24"><path d="M3 4h3l2.5 12h9L21 8H7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="20" r="1.7" fill="currentColor"/><circle cx="17" cy="20" r="1.7" fill="currentColor"/></svg>
+            <span>Моя корзина</span>
+        </a>
+    </nav>
+
+</body>
+</html>
