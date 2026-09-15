@@ -23,14 +23,14 @@ func StartServer() {
 
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./resources")
-	
-	r.GET("/grid", h.GetGrid)
 
-	r.GET("/feed/:id", h.GetFeed) 
-	
-	r.GET("/add", h.GetAdd)
+	r.GET("/consumer_categories", h.GetConsumerCategories)
 
-	err = r.Run(":8081")
+	r.GET("/consumer_categories_feed/:id", h.GetConsumerCategoryFeed)
+
+	r.GET("/add_consumer_category", h.GetAddConsumerCategory)
+
+	err = r.Run(":8082")
 	if err != nil {
 		logrus.Fatal(err)
 	}
