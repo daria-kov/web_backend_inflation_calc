@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>мойИПЦ</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <a class="logo">
+            <span class="logo-icon"><span class="logo-mid"><span class="logo-in"></span></span></span>
+            <span class="logo-text"><span class="letter-pink">мойИ</span><span class="letter-orange">П</span><span class="letter-yellow">Ц</span></span>
+        </a>
+    </header>
+
+    <main class="grid">
+
+        <form class="filter-row" method="GET" action="/consumer_categories">
+            <div class="date-input-wrap">
+
+                <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    class="date-input"
+                    value="{{ .filterDate }}"
+                >
+            </div>
+
+            <button type="submit" class="search-btn" aria-label="Поиск">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+            </button>
+        </form>
+
+
+        <div class="cards">
+            {{ range .categories }}
+            <div class="card-wrapper">
+                <a href="/consumer_categories_feed/{{ .CategoryID }}" class="card">
+                    <img src="http://localhost:9000/categories/{{ .ImageURL }}" onerror="this.src='/static/img/default.jpg'">
+                    <div class="card-title">{{ .Title }}</div>
+                    <div class="card-pills">
+                        <span class="date-pill">{{ .HistoricalDate.Format "02.01.2006" }}</span>
+                        <span class="like-pill">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            {{ .LikesCount }}
+                        </span>
+                    </div>
+                </a>
+
+                <form action="/delete_consumer_category/{{ .CategoryID }}" method="POST" class="delete-form">
+                    <button type="submit" class="delete-btn" aria-label="Удалить категорию">×</button>
+                </form>
+            </div>
+            {{ end }}
+        </div>
+    </main>
+
+    <nav class="tabbar">
+        <a class="tab" href="/consumer_categories_feed/1">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="currentColor"/></svg>
+            <span>Лента</span>
+        </a>
+        <a class="tab" href="/add_consumer_category">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M11 6h2v5h5v2h-5v5h-2v-5H6v-2h5z" fill="#fff"/></svg>
+            <span>Добавить</span>
+        </a>
+
+        <a class="tab active" href="/consumer_categories">
+            <svg viewBox="0 0 24 24"><path d="M3 4h3l2.5 12h9L21 8H7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="20" r="1.7" fill="currentColor"/><circle cx="17" cy="20" r="1.7" fill="currentColor"/></svg>
+            <span>Моя корзина</span>
+        </a>
+    </nav>
+
+</body>
+</html>
