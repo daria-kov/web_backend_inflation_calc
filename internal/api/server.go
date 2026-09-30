@@ -15,7 +15,7 @@ func StartServer() {
 
 	repo, err := repository.NewRepository(dsn.FromEnv())
 	if err != nil {
-		logrus.Error("Ошибка инициализации репозитория")
+		logrus.Fatal("Ошибка инициализации репозитория:", err)
 	}
 
 	h := handler.NewHandler(repo)
@@ -25,15 +25,21 @@ func StartServer() {
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./resources")
 
-	r.GET("/consumer_categories", h.GetConsumerCategories)
-	r.GET("/consumer_categories_feed/:id", h.GetConsumerCategoryFeed)
-	r.GET("/add_consumer_category", h.GetAddConsumerCategory)
+	r.GET("/api/consumer_categories", h.GetConsumerCategoriesAPI)
+	r.GET("/api/consumer_categories/feed", h.GetConsumerCategoryFeedAPI)
+	r.GET("/api/consumer_categories/feed/:id", h.GetConsumerCategoryFeedByIDAPI)
+	r.GET("/api/consumer_categories/draft", h.GetConsumerCategoryDraftAPI)
 
-	r.POST("/add_consumer_category", h.CreateConsumerCategoryDraft)
-	r.POST("/publish_consumer_category", h.PublishConsumerCategory)
-	r.POST("/delete_consumer_category/:id", h.DeleteConsumerCategory)
+	r.POST("/api/consumer_categories", h.CreateConsumerCategoryAPI)
+	r.PUT("/api/consumer_categories/:id/publish", h.PublishConsumerCategoryAPI)
+	r.POST("/api/consumer_categories/:id/like", h.LikeConsumerCategoryAPI)
+	r.DELETE("/api/consumer_categories/:id", h.DeleteConsumerCategoryAPI)
 
-	err = r.Run(":8082")
+	r.POST("/api/users/register", h.RegisterUserAPI)
+	r.POST("/api/users/auth", h.AuthUserAPI)
+	r.POST("/api/users/deauth", h.DeauthUserAPI)
+
+	err = r.Run(":8084")
 	if err != nil {
 		logrus.Fatal(err)
 	}

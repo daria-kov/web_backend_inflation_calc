@@ -114,11 +114,15 @@ func (r *Repository) GetConsumerCategoryByID(id int, next bool) (ds.ConsumerCate
 	return category, nil
 }
 
-func (r *Repository) GetConsumerCategoryDraft() (ds.ConsumerCategory, error) {
+func (r *Repository) GetConsumerCategoryDraft(creatorID uint) (ds.ConsumerCategory, error) {
 	var category ds.ConsumerCategory
 
 	err := r.db.
-		Where("status = ?", "draft").
+		Where(
+			"creator_id = ? AND status = ?",
+			creatorID,
+			"draft",
+		).
 		Order("category_id DESC").
 		First(&category).Error
 
@@ -133,17 +137,32 @@ func (r *Repository) GetConsumerCategoryDraft() (ds.ConsumerCategory, error) {
 	return category, nil
 }
 
-func (r *Repository) CreateConsumerCategoryDraft(title string) error {
+func (r *Repository) CreateConsumerCategoryDraft(title string, imageFilename string, videoFilename string, creatorID uint) error {
+	var count int64
+
+	err := r.db.
+		Model(&ds.ConsumerCategory{}).
+		Where("creator_id = ? AND status = ?", creatorID, "draft").
+		Count(&count).Error
+
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return fmt.Errorf("у пользователя уже есть draft")
+	}
+
 	category := ds.ConsumerCategory{
 		Title:          title,
 		Description:    "",
 		Status:         "draft",
-		ImageURL:       "",
-		VideoURL:       "",
+		ImageURL:       imageFilename,
+		VideoURL:       videoFilename,
 		BasketWeight:   0,
 		HistoricalDate: time.Now(),
 		CreatedAt:      time.Now(),
-		CreatorID:      1,
+		CreatorID:      creatorID,
 	}
 
 	return r.db.Create(&category).Error
@@ -151,32 +170,90 @@ func (r *Repository) CreateConsumerCategoryDraft(title string) error {
 
 func (r *Repository) PublishConsumerCategory(
 	id int,
+	creatorID uint,
 	description string,
 	historicalDate time.Time,
 	basketWeight float64,
 ) error {
-
-	return r.db.
+	result := r.db.
 		Model(&ds.ConsumerCategory{}).
-		Where("category_id = ? AND status = ?", id, "draft").
+		Where(
+			"category_id = ? AND creator_id = ? AND status = ?",
+			id,
+			creatorID,
+			"draft",
+		).
 		Updates(map[string]interface{}{
 			"description":     description,
 			"historical_date": historicalDate,
 			"basket_weight":   basketWeight,
 			"status":          "published",
-		}).Error
+		})
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("draft не найден или принадлежит другому пользователю")
+	}
+
+	return nil
 }
 
-func (r *Repository) DeleteConsumerCategory(id int) error {
-	db, err := r.db.DB()
-	if err != nil {
+func (r *Repository) DeleteConsumerCategory(id int, creatorID uint) error {
+	result := r.db.
+		Model(&ds.ConsumerCategory{}).
+		Where(
+			"category_id = ? AND creator_id = ? AND status != ?",
+			id,
+			creatorID,
+			"deleted",
+		).
+		Update("status", "deleted")
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("категория не найдена или принадлежит другому пользователю")
+	}
+
+	return nil
+}
+
+func (r *Repository) SetLike(categoryID uint, userID uint, likeValue int) error {
+	var like ds.Like
+
+	err := r.db.
+		Where("category_id = ? AND user_id = ?", categoryID, userID).
+		First(&like).Error
+
+	if likeValue == 1 {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			like = ds.Like{
+				CategoryID: categoryID,
+				UserID:     userID,
+			}
+
+			return r.db.Create(&like).Error
+		}
+
 		return err
 	}
 
-	_, err = db.Exec(
-		"UPDATE consumer_categories SET status = 'deleted' WHERE category_id = $1",
-		id,
-	)
+	if likeValue == 0 {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
 
-	return err
+		if err != nil {
+			return err
+		}
+
+		return r.db.Delete(&like).Error
+	}
+
+	return fmt.Errorf("like должен быть 0 или 1")
 }
