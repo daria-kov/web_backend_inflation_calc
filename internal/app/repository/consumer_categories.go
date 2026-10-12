@@ -269,6 +269,7 @@ func (r *Repository) PublishConsumerCategory(
 			"historical_date": historicalDate,
 			"basket_weight":   basketWeight,
 			"status":          "published",
+			"published_at":    time.Now(),
 		})
 
 	if result.Error != nil {
