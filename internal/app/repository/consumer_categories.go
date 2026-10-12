@@ -9,13 +9,38 @@ import (
 	"gorm.io/gorm"
 )
 
-func (r *Repository) GetConsumerCategories(filterDate string) ([]ds.ConsumerCategory, error) {
+func (r *Repository) GetConsumerCategories(
+	filterDate string,
+) ([]ds.ConsumerCategory, error) {
+	return r.GetConsumerCategoriesForUser(filterDate, 0)
+}
+
+func (r *Repository) GetConsumerCategoriesForUser(
+	filterDate string,
+	userID uint,
+) ([]ds.ConsumerCategory, error) {
 	var categories []ds.ConsumerCategory
 
 	query := r.db.
 		Model(&ds.ConsumerCategory{}).
-		Select("consumer_categories.*, COUNT(likes.like_id) AS likes_count").
-		Joins("LEFT JOIN likes ON likes.category_id = consumer_categories.category_id").
+		Select(`
+			consumer_categories.*,
+			COUNT(likes.like_id) AS likes_count,
+			CASE
+				WHEN EXISTS (
+					SELECT 1
+					FROM likes AS user_likes
+					WHERE user_likes.category_id =
+						consumer_categories.category_id
+					AND user_likes.user_id = ?
+				)
+				THEN 1
+				ELSE 0
+			END AS is_liked
+		`, userID).
+		Joins(
+			"LEFT JOIN likes ON likes.category_id = consumer_categories.category_id",
+		).
 		Where("consumer_categories.status = ?", "published").
 		Group("consumer_categories.category_id")
 
@@ -38,14 +63,34 @@ func (r *Repository) GetConsumerCategories(filterDate string) ([]ds.ConsumerCate
 	return categories, nil
 }
 
-func (r *Repository) GetConsumerCategoryByID(id int, next bool) (ds.ConsumerCategory, error) {
+func (r *Repository) GetConsumerCategoryByID(
+	id int,
+	next bool,
+	userID uint,
+) (ds.ConsumerCategory, error) {
 	var category ds.ConsumerCategory
 
 	if !next {
 		err := r.db.
 			Model(&ds.ConsumerCategory{}).
-			Select("consumer_categories.*, COUNT(likes.like_id) AS likes_count").
-			Joins("LEFT JOIN likes ON likes.category_id = consumer_categories.category_id").
+			Select(`
+				consumer_categories.*,
+				COUNT(likes.like_id) AS likes_count,
+				CASE
+					WHEN EXISTS (
+						SELECT 1
+						FROM likes AS user_likes
+						WHERE user_likes.category_id =
+							consumer_categories.category_id
+						AND user_likes.user_id = ?
+					)
+					THEN 1
+					ELSE 0
+				END AS is_liked
+			`, userID).
+			Joins(
+				"LEFT JOIN likes ON likes.category_id = consumer_categories.category_id",
+			).
 			Where(
 				"consumer_categories.category_id = ? AND consumer_categories.status = ?",
 				id,
@@ -85,8 +130,24 @@ func (r *Repository) GetConsumerCategoryByID(id int, next bool) (ds.ConsumerCate
 
 	err = r.db.
 		Model(&ds.ConsumerCategory{}).
-		Select("consumer_categories.*, COUNT(likes.like_id) AS likes_count").
-		Joins("LEFT JOIN likes ON likes.category_id = consumer_categories.category_id").
+		Select(`
+			consumer_categories.*,
+			COUNT(likes.like_id) AS likes_count,
+			CASE
+				WHEN EXISTS (
+					SELECT 1
+					FROM likes AS user_likes
+					WHERE user_likes.category_id =
+						consumer_categories.category_id
+					AND user_likes.user_id = ?
+				)
+				THEN 1
+				ELSE 0
+			END AS is_liked
+		`, userID).
+		Joins(
+			"LEFT JOIN likes ON likes.category_id = consumer_categories.category_id",
+		).
 		Where(
 			"consumer_categories.category_id > ? AND consumer_categories.status = ?",
 			current.CategoryID,
@@ -99,8 +160,24 @@ func (r *Repository) GetConsumerCategoryByID(id int, next bool) (ds.ConsumerCate
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		err = r.db.
 			Model(&ds.ConsumerCategory{}).
-			Select("consumer_categories.*, COUNT(likes.like_id) AS likes_count").
-			Joins("LEFT JOIN likes ON likes.category_id = consumer_categories.category_id").
+			Select(`
+				consumer_categories.*,
+				COUNT(likes.like_id) AS likes_count,
+				CASE
+					WHEN EXISTS (
+						SELECT 1
+						FROM likes AS user_likes
+						WHERE user_likes.category_id =
+							consumer_categories.category_id
+						AND user_likes.user_id = ?
+					)
+					THEN 1
+					ELSE 0
+				END AS is_liked
+			`, userID).
+			Joins(
+				"LEFT JOIN likes ON likes.category_id = consumer_categories.category_id",
+			).
 			Where("consumer_categories.status = ?", "published").
 			Group("consumer_categories.category_id").
 			Order("consumer_categories.category_id ASC").
@@ -108,6 +185,10 @@ func (r *Repository) GetConsumerCategoryByID(id int, next bool) (ds.ConsumerCate
 	}
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ds.ConsumerCategory{}, fmt.Errorf("категория не найдена")
+		}
+
 		return ds.ConsumerCategory{}, err
 	}
 

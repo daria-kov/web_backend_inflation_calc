@@ -26,7 +26,6 @@ func StartServer() {
 	r.Static("/static", "./resources")
 
 	r.GET("/api/consumer_categories", h.GetConsumerCategoriesAPI)
-	r.GET("/api/consumer_categories/feed", h.GetConsumerCategoryFeedAPI)
 	r.GET("/api/consumer_categories/feed/:id", h.GetConsumerCategoryFeedByIDAPI)
 	r.GET("/api/consumer_categories/draft", h.GetConsumerCategoryDraftAPI)
 

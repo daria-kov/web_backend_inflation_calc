@@ -15,4 +15,5 @@ type ConsumerCategoryResponse struct {
 	CreatorID      uint      `json:"creator_id"`
 	LikesCount     int       `json:"likes_count"`
 	IsCreator      int       `json:"is_creator"`
+	IsLiked        int       `json:"is_liked"`
 }

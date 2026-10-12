@@ -15,4 +15,5 @@ type ConsumerCategory struct {
 	CreatorID      uint      `gorm:"not null"`
 
 	LikesCount int `gorm:"->"`
+	IsLiked    int `gorm:"->;-:migration"`
 }

@@ -11,7 +11,6 @@ import (
 	"web_backend/internal/app/user"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 func generateFilename(ext string) (string, error) {
@@ -34,18 +33,19 @@ func generateFilename(ext string) (string, error) {
 
 func (h *Handler) GetConsumerCategoriesAPI(ctx *gin.Context) {
 	filterDate := ctx.Query("date")
+	currentUser := user.GetCurrentUser()
 
-	categories, err := h.Repository.GetConsumerCategories(filterDate)
+	categories, err := h.Repository.GetConsumerCategoriesForUser(
+		filterDate,
+		currentUser.UserID,
+	)
+
 	if err != nil {
-		logrus.Error(err)
-
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-
-	currentUser := user.GetCurrentUser()
 
 	response := make([]serializer.ConsumerCategoryResponse, 0, len(categories))
 
@@ -69,6 +69,7 @@ func (h *Handler) GetConsumerCategoriesAPI(ctx *gin.Context) {
 			CreatorID:      category.CreatorID,
 			LikesCount:     category.LikesCount,
 			IsCreator:      isCreator,
+			IsLiked:        category.IsLiked,
 		})
 	}
 
@@ -220,45 +221,6 @@ func (h *Handler) GetConsumerCategoryDraftAPI(ctx *gin.Context) {
 	})
 }
 
-func (h *Handler) GetConsumerCategoryFeedAPI(ctx *gin.Context) {
-	categories, err := h.Repository.GetConsumerCategories("")
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	currentUser := user.GetCurrentUser()
-
-	response := make([]serializer.ConsumerCategoryResponse, 0, len(categories))
-
-	for _, category := range categories {
-		isCreator := 0
-
-		if category.CreatorID == currentUser.UserID {
-			isCreator = 1
-		}
-
-		response = append(response, serializer.ConsumerCategoryResponse{
-			ID:             category.CategoryID,
-			Title:          category.Title,
-			Description:    category.Description,
-			Status:         category.Status,
-			ImageURL:       category.ImageURL,
-			VideoURL:       category.VideoURL,
-			BasketWeight:   category.BasketWeight,
-			HistoricalDate: category.HistoricalDate,
-			CreatedAt:      category.CreatedAt,
-			CreatorID:      category.CreatorID,
-			LikesCount:     category.LikesCount,
-			IsCreator:      isCreator,
-		})
-	}
-
-	ctx.JSON(http.StatusOK, response)
-}
-
 func (h *Handler) PublishConsumerCategoryAPI(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -321,14 +283,17 @@ func (h *Handler) GetConsumerCategoryFeedByIDAPI(ctx *gin.Context) {
 	}
 
 	next := ctx.Query("next") == "true"
+	currentUser := user.GetCurrentUser()
 
-	category, err := h.Repository.GetConsumerCategoryByID(id, next)
+	category, err := h.Repository.GetConsumerCategoryByID(
+		id,
+		next,
+		currentUser.UserID,
+	)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-
-	currentUser := user.GetCurrentUser()
 
 	isCreator := 0
 	if category.CreatorID == currentUser.UserID {
@@ -348,6 +313,7 @@ func (h *Handler) GetConsumerCategoryFeedByIDAPI(ctx *gin.Context) {
 		CreatorID:      category.CreatorID,
 		LikesCount:     category.LikesCount,
 		IsCreator:      isCreator,
+		IsLiked:        category.IsLiked,
 	}
 
 	ctx.JSON(http.StatusOK, response)
