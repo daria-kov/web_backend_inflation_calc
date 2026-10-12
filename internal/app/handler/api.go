@@ -390,16 +390,16 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 		return
 	}
 
-	if request.FullName == "" || request.Email == "" {
+	if request.FullName == "" || request.Password == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "full_name and email are required",
+			"error": "full_name and password are required",
 		})
 		return
 	}
 
 	newUser, err := h.Repository.CreateUser(
 		request.FullName,
-		request.Email,
+		request.Password,
 	)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -411,7 +411,6 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, serializer.UserResponse{
 		ID:       newUser.UserID,
 		FullName: newUser.FullName,
-		Email:    newUser.Email,
 	})
 }
 

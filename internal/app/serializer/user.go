@@ -2,11 +2,10 @@ package serializer
 
 type RegisterUserRequest struct {
 	FullName string `json:"full_name"`
-	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type UserResponse struct {
 	ID       uint   `json:"id"`
 	FullName string `json:"full_name"`
-	Email    string `json:"email"`
 }

@@ -4,10 +4,10 @@ import (
 	"web_backend/internal/app/ds"
 )
 
-func (r *Repository) CreateUser(fullName string, email string) (ds.Users, error) {
+func (r *Repository) CreateUser(fullName string, password string) (ds.Users, error) {
 	newUser := ds.Users{
 		FullName: fullName,
-		Email:    email,
+		Password: password,
 	}
 
 	if err := r.db.Create(&newUser).Error; err != nil {
