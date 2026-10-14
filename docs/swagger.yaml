@@ -1,0 +1,444 @@
+basePath: /
+definitions:
+  serializer.AuthUserRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  serializer.ConsumerCategoryResponse:
+    properties:
+      basket_weight:
+        type: number
+      created_at:
+        type: string
+      creator_id:
+        type: integer
+      description:
+        type: string
+      historical_date:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_creator:
+        type: integer
+      is_liked:
+        type: integer
+      likes_count:
+        type: integer
+      published_at:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      video_url:
+        type: string
+    type: object
+  serializer.RegisterUserRequest:
+    properties:
+      full_name:
+        type: string
+      login:
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    type: object
+  serializer.UserResponse:
+    properties:
+      full_name:
+        type: string
+      id:
+        type: integer
+      login:
+        type: string
+    type: object
+host: localhost:8084
+info:
+  contact: {}
+  description: API для работы с пользовательскими категориями.
+  title: Consumer Categories API
+  version: "1.0"
+paths:
+  /api/consumer_categories:
+    get:
+      description: Возвращает список опубликованных категорий с количеством лайков
+        и информацией о лайке текущего пользователя.
+      parameters:
+      - description: Дата исторического события
+        format: YYYY-MM-DD
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/serializer.ConsumerCategoryResponse'
+            type: array
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить список категорий
+      tags:
+      - Consumer Categories
+    post:
+      consumes:
+      - multipart/form-data
+      description: Создаёт черновик категории и загружает изображение и видео в хранилище.
+      parameters:
+      - description: Название категории
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Изображение категории
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Видео категории
+        in: formData
+        name: video
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Черновик создан
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные или у пользователя уже есть черновик
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка обработки файла или сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Создать черновик категории
+      tags:
+      - Consumer Categories
+  /api/consumer_categories/{id}:
+    delete:
+      description: Меняет статус категории на deleted. Удалять можно только свою категорию.
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Категория удалена
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Категория не найдена или принадлежит другому пользователю
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Удалить категорию
+      tags:
+      - Consumer Categories
+  /api/consumer_categories/{id}/like:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Устанавливает или снимает лайк текущего пользователя для опубликованной
+        категории.
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Действие: 1 — поставить лайк, 0 — снять'
+        in: formData
+        name: like
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Лайк обновлён
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный ID или значение like
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка обновления лайка
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Поставить или снять лайк
+      tags:
+      - Consumer Categories
+  /api/consumer_categories/{id}/publish:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Публикует черновик текущего пользователя, сохраняя описание, историческую
+        дату и вес корзины.
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Описание категории
+        in: formData
+        name: description
+        type: string
+      - description: Историческая дата в формате YYYY-MM-DD
+        in: formData
+        name: historical_date
+        required: true
+        type: string
+      - description: Вес корзины
+        in: formData
+        name: basket_weight
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Категория опубликована
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные или черновик не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Опубликовать категорию
+      tags:
+      - Consumer Categories
+  /api/consumer_categories/draft:
+    get:
+      description: Возвращает последний черновик текущего пользователя.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.ConsumerCategoryResponse'
+        "404":
+          description: Черновик не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Получить свой черновик
+      tags:
+      - Consumer Categories
+  /api/consumer_categories/feed/{id}:
+    get:
+      description: Возвращает опубликованную категорию. При next=true возвращает следующую
+        опубликованную категорию, а при достижении конца списка переходит к первой.
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Перейти к следующей категории
+        in: query
+        name: next
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializer.ConsumerCategoryResponse'
+        "400":
+          description: Некорректный ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Категория не найдена
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить категорию по ID
+      tags:
+      - Consumer Categories
+  /api/users/auth:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет логин и пароль и возвращает JWT-токен со сроком действия
+        24 часа.
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.AuthUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен доступа и данные пользователя
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Некорректный запрос
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неверный логин или пароль
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Авторизовать пользователя
+      tags:
+      - Users
+  /api/users/deauth:
+    post:
+      description: Отзывает текущий JWT, добавляя его хеш в чёрный список Redis до
+        истечения срока действия токена.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Выход выполнен успешно
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Токен отсутствует, недействителен или истёк
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: JWT_SECRET не настроен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Не удалось отозвать токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Выйти из системы
+      tags:
+      - Users
+  /api/users/register:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт пользователя с логином, именем и паролем. Пароль сохраняется
+        в виде bcrypt-хеша.
+      parameters:
+      - description: Данные нового пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/serializer.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/serializer.UserResponse'
+        "400":
+          description: Некорректные данные или ошибка создания пользователя
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Зарегистрировать пользователя
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

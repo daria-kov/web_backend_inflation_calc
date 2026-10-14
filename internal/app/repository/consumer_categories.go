@@ -9,16 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (r *Repository) GetConsumerCategories(
-	filterDate string,
-) ([]ds.ConsumerCategory, error) {
-	return r.GetConsumerCategoriesForUser(filterDate, 0)
-}
-
-func (r *Repository) GetConsumerCategoriesForUser(
-	filterDate string,
-	userID uint,
-) ([]ds.ConsumerCategory, error) {
+func (r *Repository) GetConsumerCategories(filterDate string, userID uint) ([]ds.ConsumerCategory, error) {
 	var categories []ds.ConsumerCategory
 
 	query := r.db.
@@ -306,36 +297,86 @@ func (r *Repository) DeleteConsumerCategory(id int, creatorID uint) error {
 }
 
 func (r *Repository) SetLike(categoryID uint, userID uint, likeValue int) error {
-	var like ds.Like
+	if categoryID == 0 || userID == 0 {
+		return fmt.Errorf("invalid category or user ID")
+	}
 
+	if likeValue != 0 && likeValue != 1 {
+		return fmt.Errorf("like должен быть 0 или 1")
+	}
+
+	// Лайкать можно только опубликованные категории.
+	var category ds.ConsumerCategory
 	err := r.db.
+		Where("category_id = ? AND status = ?", categoryID, "published").
+		First(&category).Error
+
+	if err != nil {
+		return err
+	}
+
+	var like ds.Like
+	err = r.db.
 		Where("category_id = ? AND user_id = ?", categoryID, userID).
 		First(&like).Error
 
 	if likeValue == 1 {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			like = ds.Like{
+			return r.db.Create(&ds.Like{
 				CategoryID: categoryID,
 				UserID:     userID,
-			}
-
-			return r.db.Create(&like).Error
+			}).Error
 		}
 
 		return err
 	}
 
-	if likeValue == 0 {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return r.db.Delete(&like).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
 	}
 
-	return fmt.Errorf("like должен быть 0 или 1")
+	return r.db.Delete(&like).Error
+}
+
+// GetFirstConsumerCategory возвращает первую опубликованную категорию для ленты без id.
+func (r *Repository) GetFirstConsumerCategory(userID uint) (ds.ConsumerCategory, error) {
+	var category ds.ConsumerCategory
+
+	err := r.db.
+		Model(&ds.ConsumerCategory{}).
+		Select(`
+			consumer_categories.*,
+			COUNT(likes.like_id) AS likes_count,
+			CASE
+				WHEN EXISTS (
+					SELECT 1
+					FROM likes AS user_likes
+					WHERE user_likes.category_id =
+						consumer_categories.category_id
+					AND user_likes.user_id = ?
+				)
+				THEN 1
+				ELSE 0
+			END AS is_liked
+		`, userID).
+		Joins(
+			"LEFT JOIN likes ON likes.category_id = consumer_categories.category_id",
+		).
+		Where("consumer_categories.status = ?", "published").
+		Group("consumer_categories.category_id").
+		Order("consumer_categories.category_id ASC").
+		First(&category).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ds.ConsumerCategory{}, fmt.Errorf("категория не найдена")
+		}
+
+		return ds.ConsumerCategory{}, err
+	}
+
+	return category, nil
 }
